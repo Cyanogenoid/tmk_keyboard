@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2012 Jun Wako <wakojun@gmail.com>
  * This file is based on:
  *     LUFA-120219/Demos/Device/Lowlevel/KeyboardMouse
@@ -306,7 +306,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
             .EndpointAddress        = (ENDPOINT_DIR_IN | KEYBOARD_IN_EPNUM),
             .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
             .EndpointSize           = KEYBOARD_EPSIZE,
-            .PollingIntervalMS      = 0x0A
+            .PollingIntervalMS      = 0x01
         },
 
     /*
@@ -347,7 +347,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
             .EndpointAddress        = (ENDPOINT_DIR_IN | MOUSE_IN_EPNUM),
             .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
             .EndpointSize           = MOUSE_EPSIZE,
-            .PollingIntervalMS      = 0x0A
+            .PollingIntervalMS      = 0x01
         },
 #endif
 
@@ -389,7 +389,7 @@ const USB_Descriptor_Configuration_t PROGMEM ConfigurationDescriptor =
             .EndpointAddress        = (ENDPOINT_DIR_IN | EXTRAKEY_IN_EPNUM),
             .Attributes             = (EP_TYPE_INTERRUPT | ENDPOINT_ATTR_NO_SYNC | ENDPOINT_USAGE_DATA),
             .EndpointSize           = EXTRAKEY_EPSIZE,
-            .PollingIntervalMS      = 0x0A
+            .PollingIntervalMS      = 0x01
         },
 #endif
 
