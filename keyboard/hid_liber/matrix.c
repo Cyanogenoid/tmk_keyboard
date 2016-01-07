@@ -21,11 +21,10 @@
 #ifndef DEBOUNCE
 #   define DEBOUNCE 0
 #endif
-static uint8_t debouncing = DEBOUNCE;
 
 // bit array of key state(1:on, 0:off)
 static matrix_row_t matrix[MATRIX_ROWS];
-static matrix_row_t matrix_debouncing[MATRIX_ROWS];
+static matrix_row_t matrix_debounce[MATRIX_ROWS * MATRIX_COLS];
 
 
 #define _DDRA (uint8_t *const)&DDRA
@@ -148,37 +147,62 @@ void matrix_init(void)
     // initialize matrix state: all keys off
     for (uint8_t i=0; i < MATRIX_ROWS; i++) {
         matrix[i] = 0;
-        matrix_debouncing[i] = 0;
+        for (uint8_t j=0; j < MATRIX_COLS; j++) {
+            matrix_debounce[j * MATRIX_ROWS + i] = 0;
+        }
     }
 }
 
 uint8_t matrix_scan(void)
 {
+    // debounce code adapted from Soarer on geekhack
+    // https://geekhack.org/index.php?topic=42385.msg1085707#msg1085707
+
+    // scan delay
+    _delay_ms(1);
+
+    // how many scans to match pattern with
+    uint8_t debounce_mask = 0xFF >> (7 - DEBOUNCE);
+
+    // fast debounce pattern
+    uint8_t debounce_down = 0x01;
+    uint8_t debounce_up = debounce_down ^ debounce_mask;
+
+    // slow debounce pattern
+    // when the key is pressed/released for less than the debounce time,
+    // this makes sure that the key is released/pressed afterwards
+    uint8_t debounce_down_safe = debounce_mask >> 1;
+    uint8_t debounce_up_safe = debounce_down_safe ^ debounce_mask;
+
+    // array of bytes that hold the bit buffers
+    uint8_t* debounce_buffer = matrix_debounce;
+
     for (uint8_t col = 0; col < MATRIX_COLS; col++) {  // 0-7
-        pull_column(col);   // output hi on theline
+        pull_column(col);   // output hi on the line
         _delay_us(5);       // without this wait it won't read stable value.
+        uint8_t col_offset = col * MATRIX_ROWS;
         for (uint8_t row = 0; row < MATRIX_ROWS; row++) {  // 0-17
-            bool prev_bit = matrix_debouncing[row] & (1<<col);
-            bool curr_bit = *row_pin[row] & row_bit[row];
-            if (prev_bit != curr_bit) {
-                matrix_debouncing[row] ^= ((matrix_row_t)1<<col);
-                if (debouncing) {
-                    dprintf("bounce!: %02X\n", debouncing);
+            bool curr_bit = *row_pin[row] & row_bit[row];  // read current value
+            uint8_t offset = col_offset + row;  // calculate offset that corresponds to the key
+
+            // update buffer with new value
+            uint8_t buffer = (debounce_buffer[offset] << 1) | curr_bit;
+            debounce_buffer[offset] = buffer;
+
+            // buffer must have changed recently
+            if (buffer != 0x00 && buffer != 0xFF) {
+                // only consider part of buffer within the mask
+                buffer &= debounce_mask;
+
+                // match debounce patterns
+                if (buffer == debounce_down || buffer == debounce_down_safe) {
+                    matrix[row] |=  ((matrix_row_t)1<<col);
+                } else if (buffer == debounce_up || buffer == debounce_up_safe) {
+                    matrix[row] &= ~((matrix_row_t)1<<col);
                 }
-                debouncing = DEBOUNCE;
             }
         }
         release_column(col);
-    }
-
-    if (debouncing) {
-        if (--debouncing) {
-            _delay_ms(1);
-        } else {
-            for (uint8_t i = 0; i < MATRIX_ROWS; i++) {
-                matrix[i] = matrix_debouncing[i];
-            }
-        }
     }
 
     return 1;
