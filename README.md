@@ -1,6 +1,8 @@
-TMK Keyboard Firmware Collection
-================================
+Fork of TMK Keyboard Firmware Collection
+========================================
 This is a keyboard firmware with some useful features for Atmel AVR controller.
+This fork reduces the latency of the HID Liberation controller for Filco Majestouch 2 TKL.
+To achieve this, USB polling rate was increased to 1000 Hz and the debounce code was replaced with a low-latency version.
 
 Source code is available here: <http://github.com/tmk/tmk_keyboard>
 
